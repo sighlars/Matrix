@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+/* eslint-disable react/no-unescaped-entities */
+import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { Geist_Mono } from "next/font/google";
 import MatrixRain from '../components/MatrixRain';
 import { useAuth } from '../context/AuthContext';
@@ -7,16 +8,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-interface Shape {
-  type: string;
-  w?: number;
-  h?: number;
-  side?: number;
-  radius?: number;
-  base?: number;
-  height?: number;
-}
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -85,9 +76,9 @@ export default function Home() {
   useEffect(() => {
     if (currentTopic && !gameOver) {
       const timer = setInterval(() => {
-        setTimeLeft((prev) => {
+        setTimeLeft((prev: number) => {
           if (prev <= 0) {
-            setLives((lives) => lives - 1);
+            setLives((lives: number) => lives - 1);
             setTimeLeft(60);
             return 0;
           }
@@ -220,16 +211,7 @@ export default function Home() {
     return '👑';
   };
 
-  const getDifficultyEmoji = (diff: string) => {
-    switch (diff) {
-      case 'easy': return '🟢';
-      case 'normal': return '🟡';
-      case 'hard': return '🔴';
-      default: return '⚪';
-    }
-  };
-
-  const usePowerup = (type: keyof typeof powerups) => {
+  const activatePowerup = (type: keyof typeof powerups) => {
     if (powerups[type] > 0) {
       setPowerups(prev => ({ ...prev, [type]: prev[type] - 1 }));
       switch (type) {
@@ -240,16 +222,16 @@ export default function Home() {
           setCurrentProblem(generateProblem(currentTopic!));
           break;
         case 'doublePoints':
-          setActiveEffects(prev => ({ ...prev, doublePoints: true }));
+          setActiveEffects((prev: { doublePoints: boolean; matrixRainbow: boolean; }) => ({ ...prev, doublePoints: true }));
           setTimeout(() => {
-            setActiveEffects(prev => ({ ...prev, doublePoints: false }));
+            setActiveEffects((prev: { doublePoints: boolean; matrixRainbow: boolean; }) => ({ ...prev, doublePoints: false }));
           }, 30000);
           break;
       }
     }
   };
 
-  const handleAnswerSubmit = (e: React.FormEvent) => {
+  const handleAnswerSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (currentProblem && Number(userAnswer) === currentProblem.answer) {
       const newCombo = combo + 1;
@@ -267,9 +249,9 @@ export default function Home() {
       const newXp = xp + points;
       const xpNeeded = level * 100;
       if (newXp >= xpNeeded) {
-        setLevel(prev => prev + 1);
+        setLevel((prev: number) => prev + 1);
         setXp(newXp - xpNeeded);
-        setPowerups(prev => ({
+        setPowerups((prev: { timeFreeze: number; skipQuestion: number; doublePoints: number; }) => ({
           timeFreeze: prev.timeFreeze + 1,
           skipQuestion: prev.skipQuestion + 1,
           doublePoints: prev.doublePoints + 1
@@ -278,19 +260,19 @@ export default function Home() {
         setXp(newXp);
       }
 
-      setMatrixEffects(prev => ({
+      setMatrixEffects((prev: { speed: number; density: number; glitch: boolean; }) => ({
         ...prev,
         speed: Math.min(2, 1 + (newCombo * 0.1)),
         glitch: true
       }));
-      setTimeout(() => setMatrixEffects(prev => ({ ...prev, glitch: false })), 500);
+      setTimeout(() => setMatrixEffects((prev: { speed: number; density: number; glitch: boolean; }) => ({ ...prev, glitch: false })), 500);
       setCurrentProblem(generateProblem(currentTopic!));
     } else {
       setCombo(0);
       setStreak(0);
       setLastResult('wrong');
       setLives(lives - 1);
-      setMatrixEffects(prev => ({ ...prev, speed: 1 }));
+      setMatrixEffects((prev: { speed: number; density: number; glitch: boolean; }) => ({ ...prev, speed: 1 }));
       if (lives <= 1) {
         setHighScore(Math.max(highScore, score));
         setGameOver(true);
@@ -308,7 +290,7 @@ export default function Home() {
     setCurrentProblem(null);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = (e: FormEvent) => {
     e.preventDefault();
     if (username.trim().length < 3) {
       setLoginError("Username must be at least 3 characters");
@@ -342,7 +324,7 @@ export default function Home() {
               <input
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 placeholder="Enter Username"
                 className="w-full bg-black/50 border border-green-500 text-green-500 px-4 py-2 mb-4"
                 autoFocus
@@ -350,7 +332,7 @@ export default function Home() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 placeholder="Enter Password"
                 className="w-full bg-black/50 border border-green-500 text-green-500 px-4 py-2 mb-4"
               />
@@ -465,28 +447,28 @@ export default function Home() {
 
             <div className="flex justify-center gap-4 mb-6">
               <button
-                onClick={() => usePowerup('timeFreeze')}
+                onClick={() => activatePowerup('timeFreeze')}
                 className={`px-3 py-1 rounded ${powerups.timeFreeze > 0
-                    ? 'border border-blue-500 hover:bg-blue-500 hover:text-black'
-                    : 'border border-gray-500 text-gray-500'
+                  ? 'border border-blue-500 hover:bg-blue-500 hover:text-black'
+                  : 'border border-gray-500 text-gray-500'
                   } transition-all duration-300`}
               >
                 ⏰ {powerups.timeFreeze}
               </button>
               <button
-                onClick={() => usePowerup('skipQuestion')}
+                onClick={() => activatePowerup('skipQuestion')}
                 className={`px-3 py-1 rounded ${powerups.skipQuestion > 0
-                    ? 'border border-yellow-500 hover:bg-yellow-500 hover:text-black'
-                    : 'border border-gray-500 text-gray-500'
+                  ? 'border border-yellow-500 hover:bg-yellow-500 hover:text-black'
+                  : 'border border-gray-500 text-gray-500'
                   } transition-all duration-300`}
               >
                 ⏭️ {powerups.skipQuestion}
               </button>
               <button
-                onClick={() => usePowerup('doublePoints')}
+                onClick={() => activatePowerup('doublePoints')}
                 className={`px-3 py-1 rounded ${powerups.doublePoints > 0
-                    ? 'border border-purple-500 hover:bg-purple-500 hover:text-black'
-                    : 'border border-gray-500 text-gray-500'
+                  ? 'border border-purple-500 hover:bg-purple-500 hover:text-black'
+                  : 'border border-gray-500 text-gray-500'
                   } transition-all duration-300`}
               >
                 2️⃣ {powerups.doublePoints}
@@ -499,7 +481,7 @@ export default function Home() {
               ${matrixEffects.glitch ? 'animate-glitch' : ''}
             `}>
               <div className="text-2xl text-center">
-                {currentProblem.question}
+                {currentProblem?.question}
               </div>
               {activeEffects.doublePoints && (
                 <div className="absolute top-0 right-0 p-2 text-purple-500">
@@ -512,7 +494,7 @@ export default function Home() {
               <input
                 type="number"
                 value={userAnswer}
-                onChange={(e) => setUserAnswer(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setUserAnswer(e.target.value)}
                 className={`w-full bg-black/50 border text-green-500 px-4 py-2 text-center backdrop-blur-sm
                   ${lastResult === 'correct' ? 'border-green-500 animate-pulse' :
                     lastResult === 'wrong' ? 'border-red-500 animate-shake' : 'border-green-500'}`}
@@ -533,7 +515,7 @@ export default function Home() {
             <div className="mt-4 flex gap-2">
               <select
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setDifficulty(e.target.value)}
                 className="bg-black/50 border border-green-500 text-green-500 px-2 py-1"
               >
                 <option value="easy">Easy</option>
